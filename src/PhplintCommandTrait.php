@@ -2,41 +2,49 @@
 
 declare(strict_types=1);
 
-namespace Drush\Commands\marvin_phplint;
+namespace Drupal\marvin_phplint;
 
-use Drupal\marvin\Utils as MarvinUtils;
-use Drush\Commands\marvin\LintCommandsBase;
 use Robo\Contract\TaskInterface;
 use Sweetchuck\Robo\Git\GitTaskLoader;
 use Sweetchuck\Robo\PhpLint\PhpLintTaskLoader;
 
-class PhplintCommandsBase extends LintCommandsBase {
+trait PhplintCommandTrait {
 
   use GitTaskLoader;
   use PhpLintTaskLoader;
 
-  protected static string $classKeyPrefix = 'marvin.phplint';
-
-  protected string $customEventNamePrefix = 'marvin:phplint';
+  /**
+   * @param ?\Robo\Symfony\ConsoleIO $io
+   *
+   * @return \Robo\Collection\CollectionBuilder
+   */
+  abstract protected function collectionBuilder($io = NULL);
 
   /**
+   * @param string $workingDirectory
+   * @param array<string> $fileNamePatterns
+   * @param null|string $gitHookName
+   *
    * @return \Robo\Contract\TaskInterface|\Robo\Collection\CollectionBuilder
    */
-  protected function getTaskLintPhplintExtension(string $workingDirectory): TaskInterface {
-    $config = $this->getConfig();
-
-    $gitHook = $config->get('marvin.gitHook');
+  protected function getTaskLintPhplintExtension(
+    string $workingDirectory,
+    array $fileNamePatterns,
+    array $phpCommand,
+    ?string $gitHookName = NULL,
+  ): TaskInterface {
     $options = [];
     $options['workingDirectory'] = $workingDirectory;
+    $options['phpExecutable'] = $phpCommand['executable'] ?? 'php';
 
-    if ($gitHook === 'pre-commit') {
+    if ($gitHookName === 'pre-commit') {
       return $this
         ->collectionBuilder()
         ->addTask($this
           ->taskGitListStagedFiles()
           ->setDiffFilter(['d' => FALSE])
           ->setWorkingDirectory($workingDirectory)
-          ->setPaths(MarvinUtils::drupalPhpExtensionPatterns()))
+          ->setPaths($fileNamePatterns))
         ->addTask($this
           ->taskGitReadStagedFiles()
           ->setWorkingDirectory($workingDirectory)
@@ -49,7 +57,7 @@ class PhplintCommandsBase extends LintCommandsBase {
 
     return $this
       ->taskPhpLintFiles($options)
-      ->setFileNamePatterns(MarvinUtils::drupalPhpExtensionPatterns());
+      ->setFileNamePatterns($fileNamePatterns);
   }
 
 }

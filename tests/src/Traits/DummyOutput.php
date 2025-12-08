@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\marvin_phplint\Helper;
+namespace Drupal\Tests\marvin_phplint\Traits;
 
 use Symfony\Component\Console\Formatter\OutputFormatterInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -21,7 +21,12 @@ class DummyOutput extends ConsoleOutput {
   /**
    * {@inheritdoc}
    */
-  public function __construct($verbosity = self::VERBOSITY_NORMAL, $decorated = NULL, OutputFormatterInterface $formatter = NULL, bool $isStdError = FALSE) {
+  public function __construct(
+    $verbosity = self::VERBOSITY_NORMAL,
+    ?bool $decorated = NULL,
+    ?OutputFormatterInterface $formatter = NULL,
+    bool $isStdError = FALSE,
+  ) {
     parent::__construct($verbosity, $decorated, $formatter);
     $this->instanceId = static::$instanceCounter++;
 
@@ -33,11 +38,8 @@ class DummyOutput extends ConsoleOutput {
 
   /**
    * {@inheritdoc}
-   *
-   * @phpstan-param string $message
-   * @phpstan-param bool $newline
    */
-  protected function doWrite($message, $newline) {
+  protected function doWrite(string $message, bool $newline): void {
     $this->output .= $message . ($newline ? PHP_EOL : '');
   }
 
